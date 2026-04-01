@@ -1,0 +1,7 @@
+= Pop_OS!
+
+My Pop_OS! config.
+
+''''
+
+Copyright © 2020-present Kieran Potts, link:./LICENSE.txt[MIT license]
