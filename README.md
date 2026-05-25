@@ -40,6 +40,6 @@ $ dconf load / < pop_os_settings.dconf
 
 > **Tip:** If you want to fully replicate all application settings, you should migrate both the `~/.config` and `~/.local` directories.
 
----
+-----
 
 Copyright © 2020-present Kieran Potts, [MIT license](./LICENSE.txt)
