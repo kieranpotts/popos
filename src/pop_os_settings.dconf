@@ -78,20 +78,20 @@ delete-after=90
 exclude-list=['$TRASH', '$DOWNLOAD', '/home/kieran/.docker', '/home/kieran/.cache', '/home/kieran/.codeium']
 include-list=['/home/kieran']
 last-backup='2026-03-10T12:31:46.524145Z'
-last-run='2026-04-02T17:10:42.055883Z'
+last-run='2026-07-01T06:52:50.994177Z'
 nag-check='2026-01-11T11:30:47.189025Z'
 periodic=true
-periodic-period=2
+periodic-period=7
 prompt-check='2025-09-01T11:35:48.975499Z'
 tool='duplicity'
 window-height=688
 window-width=1106
 
 [org/gnome/deja-dup/drive]
-folder='PopOS'
-icon='. GThemedIcon drive-harddisk-usb drive-harddisk drive drive-harddisk-usb-symbolic drive-harddisk-symbolic drive-symbolic'
-name='Backups'
-uuid='1C42C74D42C729FA'
+folder='PopOS/Workstation'
+icon='. GEmblemedIcon .%20GThemedIcon%20drive-harddisk-usb%20drive-harddisk%20drive%20drive-harddisk-usb-symbolic%20drive-harddisk-symbolic%20drive-symbolic .%20GEmblem%20changes-allow%201'
+name='Backup'
+uuid='f8113580-fab5-4620-be4f-4ed9def648a9'
 
 [org/gnome/desktop/a11y/applications]
 screen-reader-enabled=false
