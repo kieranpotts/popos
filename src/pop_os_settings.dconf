@@ -279,7 +279,7 @@ show-sidebar=false
 sidebar-page='thumbnails'
 sidebar-size=393
 sizing-mode='free'
-window-ratio=(1.3546218487394959, 0.81688466111771696)
+window-ratio=(1.5196078431372548, 0.85606060606060608)
 zoom=0.5783997626828512
 
 [org/gnome/evolution-data-server]
@@ -290,12 +290,19 @@ network-monitor-gio-name=''
 default-address-book='system-address-book'
 
 [org/gnome/file-roller/dialogs/extract]
+height=692
 recreate-folders=true
 skip-newer=false
+width=1000
+
+[org/gnome/file-roller/file-selector]
+show-hidden=false
+sidebar-size=300
+window-size=(-1, -1)
 
 [org/gnome/file-roller/listing]
 list-mode='as-folder'
-name-column-width=250
+name-column-width=392
 show-path=false
 sort-method='name'
 sort-type='ascending'
@@ -487,5 +494,5 @@ sort-column='name'
 sort-directories-first=true
 sort-order='ascending'
 type-format='category'
-window-position=(20, 20)
+window-position=(35, 32)
 window-size=(1086, 538)
