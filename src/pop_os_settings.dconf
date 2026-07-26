@@ -80,7 +80,7 @@ include-list=['/home/kieran']
 last-backup='2026-07-01T07:05:21.924656Z'
 last-run='2026-07-01T06:52:50.994177Z'
 nag-check='2026-07-01T07:05:38.581980Z'
-periodic=true
+periodic=false
 periodic-period=7
 prompt-check='2025-09-01T11:35:48.975499Z'
 tool='duplicity'
@@ -154,7 +154,7 @@ font-name='DejaVu Sans'
 gtk-theme='adw-gtk3-dark'
 icon-theme='Cosmic'
 show-battery-percentage=true
-toolkit-accessibility=false
+toolkit-accessibility=true
 
 [org/gnome/desktop/notifications]
 application-children=['io-elementary-appcenter', 'org-gnome-terminal', 'org-gnome-contacts', 'org-gnome-geary', 'firefox', 'gnome-network-panel', 'org-gnome-diskutility', 'org-gnome-seahorse-application', 'org-gnome-gedit', 'org-gnome-calendar', 'gnome-control-center', 'app-zen-browser-zen', 'org-gnome-nautilus', 'org-gnome-eog', 'gnome-power-panel', 'libreoffice-calc', 'org-gnome-fileroller', 'org-mozilla-vpn', 'jetbrains-toolbox', 'org-gnome-dejadup', 'org-gnome-world-secrets', 'org-gnome-calculator']
@@ -279,7 +279,7 @@ show-sidebar=false
 sidebar-page='thumbnails'
 sidebar-size=393
 sizing-mode='free'
-window-ratio=(1.5196078431372548, 0.85606060606060608)
+window-ratio=(1.5932773109243696, 1.2161520190023754)
 zoom=0.5783997626828512
 
 [org/gnome/evolution-data-server]
