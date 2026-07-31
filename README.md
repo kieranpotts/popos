@@ -15,14 +15,17 @@ no built-in export/import feature, but you can migrate it manually. To export,
 simply create an archive of the directory:
 
 ```
-$ tar -czf src/cosmic-settings-backup.tar.gz ~/.config/cosmic
+$ tar -czf src/cosmic-settings-backup.tar.gz -C ~/.config cosmic
 ```
 
 Then restore it on the target machine:
 
 ```
-$ tar -xzf src/cosmic-settings-backup.tar.gz -C ~/.config/cosmic
+$ tar -xzf src/cosmic-settings-backup.tar.gz -C ~/.config
 ```
+
+The `-C` flag is important on both the export and import commands to ensure that
+the archive is created as a relative path from `~/.config`.
 
 It's not recommended to symlink the `~/.config/cosmic` directory.
 
