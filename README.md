@@ -2,6 +2,12 @@
 
 My Pop_OS! config, for backup and migration purposes.
 
+## Installer
+
+Run `./run/install` to restore the backups below onto a new machine
+automatically (Cosmic settings tarball, dconf dump, and backgrounds). See
+`./run/install --help` for options. It does not apply `Dark.ron` — see below.
+
 ## Documentation
 
 The new "cosmic" desktop does not offer a complete export/import feature, except

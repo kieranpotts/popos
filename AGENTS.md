@@ -6,6 +6,12 @@ not application code — there is no build, test, or lint tooling.
 
 ## Project structure
 
+- **[run/install](./run/install)** \
+  Restores the backups below onto the current machine: extracts the Cosmic
+  settings tarball, loads the dconf dump, and links/copies the backgrounds
+  directory. Run `./run/install --help` for options. Does not apply
+  `Dark.ron` — that has no scriptable import and must be applied manually.
+
 - **[src/Dark.ron](./src/Dark.ron)** \
   Desktop appearance configuration, exported from Cosmic Settings
   (**Desktop > Appearance**).

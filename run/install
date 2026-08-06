@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+#
+# Restore this repo's Pop!_OS / Cosmic desktop backups onto the current
+# machine. Mirrors the manual steps documented in README.md.
+#
+# Usage:
+#   ./run/install [options]
+#
+# Options:
+#   -y, --yes        Don't prompt before overwriting ~/.config/cosmic.
+#       --copy-backgrounds
+#                     Copy src/Documents/Backgrounds instead of symlinking it.
+#   -n, --dry-run     Print what would happen without changing anything.
+#   -h, --help        Show this help and exit.
+#
+# What it does NOT do:
+#   - Import Dark.ron. Cosmic Settings has no CLI/import hook for desktop
+#     appearance; apply it manually via Desktop > Appearance in Cosmic
+#     Settings.
+
+set -euo pipefail
+
+REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." &>/dev/null && pwd)"
+SRC_DIR="${REPO_ROOT}/src"
+
+ASSUME_YES=0
+DRY_RUN=0
+COPY_BACKGROUNDS=0
+
+usage() {
+  sed -n '2,25p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -y|--yes) ASSUME_YES=1 ;;
+    -n|--dry-run) DRY_RUN=1 ;;
+    --copy-backgrounds) COPY_BACKGROUNDS=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
+  esac
+  shift
+done
+
+log() { printf '==> %s\n' "$*"; }
+run() {
+  if [ "${DRY_RUN}" -eq 1 ]; then
+    printf '[dry-run] %s\n' "$*"
+  else
+    "$@"
+  fi
+}
+
+confirm() {
+  local prompt="$1"
+  if [ "${ASSUME_YES}" -eq 1 ] || [ "${DRY_RUN}" -eq 1 ]; then
+    return 0
+  fi
+  read -r -p "${prompt} [y/N] " reply
+  [[ "${reply}" =~ ^[Yy]$ ]]
+}
+
+require_cmd() {
+  if ! command -v "$1" &>/dev/null; then
+    echo "Missing required command: $1" >&2
+    exit 1
+  fi
+}
+
+# 1. Cosmic desktop settings (theme, layout, panel/dock, keyboard shortcuts).
+restore_cosmic_settings() {
+  local archive="${SRC_DIR}/cosmic-settings-backup.tar.gz"
+  local target="${HOME}/.config/cosmic"
+
+  if [ ! -f "${archive}" ]; then
+    log "Skipping Cosmic settings: ${archive} not found."
+    return
+  fi
+
+  require_cmd tar
+
+  if [ -e "${target}" ] || [ -L "${target}" ]; then
+    log "Cosmic settings dir already exists: ${target}"
+    if ! confirm "Overwrite ~/.config/cosmic with the backup?"; then
+      log "Skipping Cosmic settings restore."
+      return
+    fi
+  fi
+
+  log "Restoring Cosmic settings to ${target}"
+  run mkdir -p "${HOME}/.config"
+  run tar -xzf "${archive}" -C "${HOME}/.config"
+}
+
+# 2. Application settings (dconf dump).
+restore_dconf_settings() {
+  local dump="${SRC_DIR}/pop_os_settings.dconf"
+
+  if [ ! -f "${dump}" ]; then
+    log "Skipping dconf settings: ${dump} not found."
+    return
+  fi
+
+  if ! command -v dconf &>/dev/null; then
+    log "Skipping dconf settings: dconf command not found."
+    return
+  fi
+
+  if ! confirm "Load ${dump} into dconf (overwrites matching keys)?"; then
+    log "Skipping dconf restore."
+    return
+  fi
+
+  log "Loading dconf settings from ${dump}"
+  if [ "${DRY_RUN}" -eq 1 ]; then
+    printf '[dry-run] dconf load / < %s\n' "${dump}"
+  else
+    dconf load / < "${dump}"
+  fi
+}
+
+# 3. Desktop wallpapers.
+restore_backgrounds() {
+  local backgrounds_src="${SRC_DIR}/Documents/Backgrounds"
+  local backgrounds_dest="${HOME}/Documents/Backgrounds"
+
+  if [ ! -d "${backgrounds_src}" ]; then
+    log "Skipping backgrounds: ${backgrounds_src} not found."
+    return
+  fi
+
+  run mkdir -p "${HOME}/Documents"
+
+  if [ "${COPY_BACKGROUNDS}" -eq 1 ]; then
+    log "Copying backgrounds to ${backgrounds_dest}"
+    run cp -r "${backgrounds_src}" "${backgrounds_dest}"
+  else
+    log "Symlinking ${backgrounds_dest} -> ${backgrounds_src}"
+    run ln --symbolic --force "${backgrounds_src}" "${backgrounds_dest}"
+  fi
+}
+
+restore_cosmic_settings
+restore_dconf_settings
+restore_backgrounds
+
+log "Done. Remaining manual step: apply src/Dark.ron via Cosmic Settings > Desktop > Appearance."
