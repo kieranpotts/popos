@@ -10,6 +10,8 @@
 #   -y, --yes        Don't prompt before overwriting ~/.config/cosmic.
 #       --copy-backgrounds
 #                     Copy src/Documents/Backgrounds instead of symlinking it.
+#       --no-autostart
+#                     Don't install the startup-workspaces autostart entry.
 #   -n, --dry-run     Print what would happen without changing anything.
 #   -h, --help        Show this help and exit.
 #
@@ -17,18 +19,29 @@
 #   - Import Dark.ron. Cosmic Settings has no CLI/import hook for desktop
 #     appearance; apply it manually via Desktop > Appearance in Cosmic
 #     Settings.
+#   - Set your real app_ids in src/cosmic-startup-workspaces.sh. The APPS
+#     list there is an example; edit it for the apps on this machine before
+#     relying on the autostart entry.
 
 set -euo pipefail
 
 REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." &>/dev/null && pwd)"
 SRC_DIR="${REPO_ROOT}/src"
 
+# cos-cli (https://github.com/estin/cos-cli) has no tagged releases, so this
+# pins a known-good commit rather than floating on `main`. It's a
+# third-party tool, unaffiliated with System76 — bump this deliberately,
+# not automatically.
+COS_CLI_GIT="https://github.com/estin/cos-cli"
+COS_CLI_REV="fe8c52016888302d6239ef53f1dbf876d8552dc2"  # 0.5.1, 2026-05-14
+
 ASSUME_YES=0
 DRY_RUN=0
 COPY_BACKGROUNDS=0
+NO_AUTOSTART=0
 
 usage() {
-  sed -n '2,25p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '2,28p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 
 while [ $# -gt 0 ]; do
@@ -36,6 +49,7 @@ while [ $# -gt 0 ]; do
     -y|--yes) ASSUME_YES=1 ;;
     -n|--dry-run) DRY_RUN=1 ;;
     --copy-backgrounds) COPY_BACKGROUNDS=1 ;;
+    --no-autostart) NO_AUTOSTART=1 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
   esac
@@ -65,6 +79,32 @@ require_cmd() {
     echo "Missing required command: $1" >&2
     exit 1
   fi
+}
+
+# cos-cli is a CLI tool for managing windows and workspaces on the COSMIC
+# Desktop Environment (Wayland). It has no packaged distribution, so this
+# builds it from source at a pinned revision (see COS_CLI_REV above).
+install_cos_cli() {
+  if command -v cos-cli &>/dev/null; then
+    log "cos-cli already installed: $(command -v cos-cli)"
+    return
+  fi
+
+  if ! command -v cargo &>/dev/null; then
+    log "NOTE: cos-cli not found and cargo isn't installed, so it can't be"
+    log "      built automatically. Install Rust (https://rustup.rs) then"
+    log "      re-run this script, or install manually:"
+    log "      cargo install --git ${COS_CLI_GIT} --rev ${COS_CLI_REV} --locked"
+    return
+  fi
+
+  if ! confirm "cos-cli not found. Build and install it now via cargo (pinned rev ${COS_CLI_REV:0:7})?"; then
+    log "Skipping cos-cli install."
+    return
+  fi
+
+  log "Installing cos-cli (cargo install --git ${COS_CLI_GIT} --rev ${COS_CLI_REV})"
+  run cargo install --git "${COS_CLI_GIT}" --rev "${COS_CLI_REV}" --locked cos-cli
 }
 
 # 1. Cosmic desktop settings (theme, layout, panel/dock, keyboard shortcuts).
@@ -140,8 +180,56 @@ restore_backgrounds() {
   fi
 }
 
+# 4. Startup-workspaces script + autostart entry.
+restore_startup_workspaces() {
+  local script="${SRC_DIR}/cosmic-startup-workspaces.sh"
+  local autostart_dir="${HOME}/.config/autostart"
+  local autostart_file="${autostart_dir}/cosmic-startup-workspaces.desktop"
+
+  if [ ! -f "${script}" ]; then
+    log "Skipping startup-workspaces: ${script} not found."
+    return
+  fi
+
+  if [ "${NO_AUTOSTART}" -eq 1 ]; then
+    log "Skipping autostart entry (--no-autostart)."
+    return
+  fi
+
+  run chmod +x "${script}"
+
+  install_cos_cli
+
+  if [ -e "${autostart_file}" ]; then
+    log "Autostart entry already exists: ${autostart_file}"
+    if ! confirm "Overwrite it to point at this repo's script?"; then
+      log "Skipping autostart entry."
+      return
+    fi
+  fi
+
+  log "Installing autostart entry -> ${autostart_file}"
+  log "  Exec target: ${script}"
+  if [ "${DRY_RUN}" -eq 1 ]; then
+    printf '[dry-run] write %s\n' "${autostart_file}"
+  else
+    mkdir -p "${autostart_dir}"
+    cat > "${autostart_file}" <<-EOF
+			[Desktop Entry]
+			Type=Application
+			Name=COSMIC Startup Workspaces
+			Exec=${script}
+			X-GNOME-Autostart-enabled=true
+		EOF
+  fi
+
+  log "Remember: APPS in src/cosmic-startup-workspaces.sh must list this"
+  log "machine's real app_ids (run: cos-cli info)."
+}
+
 restore_cosmic_settings
 restore_dconf_settings
 restore_backgrounds
+restore_startup_workspaces
 
 log "Done. Remaining manual step: apply src/Dark.ron via Cosmic Settings > Desktop > Appearance."

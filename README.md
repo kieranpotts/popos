@@ -5,8 +5,9 @@ My Pop_OS! config, for backup and migration purposes.
 ## Installer
 
 Run `./run/install` to restore the backups below onto a new machine
-automatically (Cosmic settings tarball, dconf dump, and backgrounds). See
-`./run/install --help` for options. It does not apply `Dark.ron` — see below.
+automatically (Cosmic settings tarball, dconf dump, backgrounds, and the
+startup-workspaces autostart entry). See `./run/install --help` for options.
+It does not apply `Dark.ron` — see below.
 
 ## Documentation
 
@@ -57,6 +58,31 @@ $ dconf load / < src/pop_os_settings.dconf
 
 > **Tip:** If you want to fully replicate all application settings, you should
 > migrate both the `~/.config` and `~/.local` directories.
+
+The `./src/cosmic-startup-workspaces.sh` script launches apps at login and
+places each on its own workspace, using
+[cos-cli](https://github.com/estin/cos-cli) since COSMIC has no native
+window-rule/workspace-assignment feature yet. `run/install`:
+
+- builds `cos-cli` via `cargo` if it isn't already installed, pinned to a
+  known-good commit (`cos-cli` has no tagged releases — see `COS_CLI_REV` in
+  `run/install`), since it's a third-party tool unaffiliated with System76;
+  this needs `cargo`/Rust (https://rustup.rs) available on `$PATH`
+- installs an autostart entry (`~/.config/autostart/cosmic-startup-workspaces.desktop`)
+  that runs the script in place from this repo checkout
+
+Before relying on it, set `COSMIC_STARTUP_APPS` for this machine's real app
+IDs in `~/.config/environment.d/cosmic-startup-workspaces.conf` — `systemd
+--user` reads that before autostart apps launch, which is what makes the
+value available at login (`~/.bashrc` is NOT sourced by autostart, so don't
+set it there). Run `cos-cli info` with each app open to find its app ID. See
+the CONFIG block in `src/cosmic-startup-workspaces.sh` for the format.
+
+> **Note:** autostart is reported to work when the session is started by
+> `cosmic-greeter`, but not by other display managers such as LightDM.
+> COSMIC also creates workspaces dynamically, so a target workspace may not
+> exist yet at login — set a fixed workspace count, or pin your workspaces,
+> in Settings > Desktop > Workspaces.
 
 -----
 
