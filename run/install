@@ -19,9 +19,10 @@
 #   - Import Dark.ron. Cosmic Settings has no CLI/import hook for desktop
 #     appearance; apply it manually via Desktop > Appearance in Cosmic
 #     Settings.
-#   - Set your real app_ids in src/cosmic-startup-workspaces.sh. The APPS
-#     list there is an example; edit it for the apps on this machine before
-#     relying on the autostart entry.
+#   - Take effect on the startup-workspaces autostart entry until the next
+#     fresh login. systemd --user reads environment.d once at session
+#     start, so it won't pick up a freshly-installed COSMIC_STARTUP_APPS
+#     mid-session.
 
 set -euo pipefail
 
@@ -180,9 +181,12 @@ restore_backgrounds() {
   fi
 }
 
-# 4. Startup-workspaces script + autostart entry.
+# 4. Startup-workspaces script + its env config + autostart entry.
 restore_startup_workspaces() {
   local script="${SRC_DIR}/cosmic-startup-workspaces.sh"
+  local env_src="${SRC_DIR}/environment.d/cosmic-startup-workspaces.conf"
+  local env_dir="${HOME}/.config/environment.d"
+  local env_dest="${env_dir}/cosmic-startup-workspaces.conf"
   local autostart_dir="${HOME}/.config/autostart"
   local autostart_file="${autostart_dir}/cosmic-startup-workspaces.desktop"
 
@@ -199,6 +203,18 @@ restore_startup_workspaces() {
   run chmod +x "${script}"
 
   install_cos_cli
+
+  # App list (COSMIC_STARTUP_APPS): symlink the version-controlled config
+  # into ~/.config/environment.d, where systemd --user reads it at login.
+  if [ ! -f "${env_src}" ]; then
+    log "Skipping env config: ${env_src} not found."
+  elif [ -e "${env_dest}" ] && [ ! -L "${env_dest}" ] && ! confirm "Env config already exists at ${env_dest} (not a symlink). Overwrite it to point at this repo's config?"; then
+    log "Skipping env config."
+  else
+    log "Symlinking ${env_dest} -> ${env_src}"
+    run mkdir -p "${env_dir}"
+    run ln --symbolic --force "${env_src}" "${env_dest}"
+  fi
 
   if [ -e "${autostart_file}" ]; then
     log "Autostart entry already exists: ${autostart_file}"
@@ -223,8 +239,8 @@ restore_startup_workspaces() {
 		EOF
   fi
 
-  log "Remember: APPS in src/cosmic-startup-workspaces.sh must list this"
-  log "machine's real app_ids (run: cos-cli info)."
+  log "Note: COSMIC_STARTUP_APPS takes effect on the next fresh login, not"
+  log "mid-session. To change the app list, edit ${env_src} in the repo."
 }
 
 restore_cosmic_settings

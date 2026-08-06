@@ -18,13 +18,12 @@ set -uo pipefail
 # ─────────────────────────────────────────────────────────────
 # CONFIG
 #
-# App list comes from $COSMIC_STARTUP_APPS if it's set, so it can live
-# centrally per-machine rather than being hardcoded here. Set it in
-# ~/.config/environment.d/cosmic-startup-workspaces.conf — systemd --user
-# reads that before autostart apps launch, which is what makes the value
-# available at login (shell rc files like ~/.bashrc are NOT sourced by
-# autostart, so don't set it there). Falls back to the example list below
-# if unset.
+# The app list is not hardcoded here — it's version-controlled at
+# src/environment.d/cosmic-startup-workspaces.conf and installed by
+# run/install to ~/.config/environment.d/cosmic-startup-workspaces.conf.
+# systemd --user reads that at the start of a login session, which is what
+# makes $COSMIC_STARTUP_APPS available to autostart apps (shell rc files
+# like ~/.bashrc are NOT sourced by autostart, so don't set it there).
 #
 # Format: one entry per app, entries separated by ";", fields within an
 # entry separated by "|":
@@ -36,19 +35,7 @@ set -uo pipefail
 #   command    exactly what you'd type in a terminal
 #   app-id     Wayland app_id, matched partially & case-insensitively.
 #              Find yours by opening the app and running: cos-cli info
-#
-# Example ~/.config/environment.d/cosmic-startup-workspaces.conf:
-#
-#   COSMIC_STARTUP_APPS=1|firefox|firefox;2|code|code;3|cosmic-term|com.system76.CosmicTerm;4|spotify|spotify
 # ─────────────────────────────────────────────────────────────
-if [[ -n "${COSMIC_STARTUP_APPS:-}" ]]; then
-  IFS=';' read -r -a APPS <<< "${COSMIC_STARTUP_APPS}"
-else
-  APPS=(
-    "1|firefox|firefox"
-    "2|code|code"
-  )
-fi
 
 # Seconds cos-cli will wait for each window to appear before giving up.
 WINDOW_TIMEOUT=25
@@ -72,6 +59,21 @@ DRY_RUN=0
 
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*"; }
 die() { log "ERROR: $*"; exit 1; }
+
+# --- No-op if no app list is configured -----------------------------------
+#
+# Nothing to do without $COSMIC_STARTUP_APPS — treat this as a normal no-op
+# (exit 0, one informational log line) rather than an error, since an
+# empty/missing config is an expected state (e.g. before run/install has
+# been run, or on a machine that intentionally has no startup apps), and
+# this script runs unattended from autostart.
+if [[ -z "${COSMIC_STARTUP_APPS:-}" ]]; then
+  log "\$COSMIC_STARTUP_APPS not set; nothing to do. (Run run/install to" \
+      "install ~/.config/environment.d/cosmic-startup-workspaces.conf.)"
+  exit 0
+fi
+
+IFS=';' read -r -a APPS <<< "${COSMIC_STARTUP_APPS}"
 
 # --- Sanity checks -------------------------------------------------------
 command -v cos-cli >/dev/null || die \
@@ -132,11 +134,7 @@ launch() {
 main() {
   (( STARTUP_DELAY > 0 )) && { log "Sleeping ${STARTUP_DELAY}s before startup..."; sleep "$STARTUP_DELAY"; }
 
-  if [[ -n "${COSMIC_STARTUP_APPS:-}" ]]; then
-    log "Using APPS from \$COSMIC_STARTUP_APPS (${#APPS[@]} entries)"
-  else
-    log "\$COSMIC_STARTUP_APPS not set; using built-in example APPS (${#APPS[@]} entries)"
-  fi
+  log "Using APPS from \$COSMIC_STARTUP_APPS (${#APPS[@]} entries)"
 
   check_workspaces
 
