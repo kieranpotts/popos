@@ -54,6 +54,15 @@ STARTUP_DELAY=0
 # ─────────────────────────────────────────────────────────────
 # Implementation — you shouldn't need to touch anything below.
 # ─────────────────────────────────────────────────────────────
+# Autostart entries inherit the `systemd --user` session PATH, which is
+# hard-set as a plain literal by /etc/environment (symlinked to
+# /usr/lib/environment.d/99-environment.conf) and so contains no user-local
+# bin dirs. Without this, cos-cli (installed by cargo to ~/.cargo/bin) is
+# invisible here and the sanity check below kills the whole run. Prepending
+# both dirs also lets the app list use bare command names for anything in
+# ~/.local/bin, rather than absolute paths.
+PATH="${HOME}/.cargo/bin:${HOME}/.local/bin:${PATH}"
+
 DRY_RUN=0
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1
 
