@@ -183,8 +183,21 @@ restore_backgrounds() {
     log "Copying backgrounds to ${backgrounds_dest}"
     run cp -r "${backgrounds_src}" "${backgrounds_dest}"
   else
+    # If backgrounds_dest already exists as a real directory (not a symlink),
+    # `ln -sf` won't replace it — it'll create the link *inside* it instead
+    # (backgrounds_dest/Backgrounds -> backgrounds_src), nesting further on
+    # every re-run. Clear that case out explicitly before symlinking.
+    if [ -d "${backgrounds_dest}" ] && [ ! -L "${backgrounds_dest}" ]; then
+      log "Backgrounds dir already exists (not a symlink): ${backgrounds_dest}"
+      if ! confirm "Replace it with a symlink to ${backgrounds_src}?"; then
+        log "Skipping backgrounds symlink."
+        return
+      fi
+      run rm -rf "${backgrounds_dest}"
+    fi
+
     log "Symlinking ${backgrounds_dest} -> ${backgrounds_src}"
-    run ln --symbolic --force "${backgrounds_src}" "${backgrounds_dest}"
+    run ln --symbolic --force --no-target-directory "${backgrounds_src}" "${backgrounds_dest}"
   fi
 }
 
