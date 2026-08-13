@@ -26,8 +26,9 @@ not application code — there is no build, test, or lint tooling.
   with `tar -xzf src/cosmic-settings-backup.tar.gz -C ~/.config`.
 
 - **[src/pop_os_settings.dconf](./src/pop_os_settings.dconf)** \
-  Application settings dump, created with `dconf dump / > src/pop_os_settings.dconf`
-  and restored with `dconf load / < src/pop_os_settings.dconf`.
+  Application settings dump, created with
+  `dconf dump / > src/pop_os_settings.dconf` and restored with
+  `dconf load / < src/pop_os_settings.dconf`.
 
 - **[src/Documents/Backgrounds/](./src/Documents/Backgrounds)** \
   Desktop wallpaper images, copied or symlinked to `~/Documents/Backgrounds`.
