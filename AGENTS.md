@@ -66,3 +66,19 @@ not application code — there is no build, test, or lint tooling.
   tagged releases. `run/install` pins it to a specific commit
   (`COS_CLI_REV`) rather than floating on `main` — bump that rev
   deliberately, not automatically.
+
+## References
+
+The following technical standards (TS) govern this project. Fetch and ingest
+the relevant standards as-and-when required for the task at hand.
+
+- [**TS-9: Version Control**](https://kieranpotts.com/standards/009) \
+  Use when working with Git. Covers commits, branching, merging, integration
+  strategies, cutting releases, and configuring Git/PR/CI tooling.
+
+- [**TS-31: Unix Shells and POSIX Standards**](https://kieranpotts.com/standards/031) \
+  Use when authoring or modifying shell scripts that must be POSIX-compliant
+  and run across multiple shells (sh, bash, zsh, dash) and platforms.
+
+- [**TS-30: YAML**](https://kieranpotts.com/standards/030) \
+  Use when writing or reviewing YAML files.
