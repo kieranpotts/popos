@@ -30,7 +30,7 @@ repository:
   topics: []
 
   # Is this a private repository?
-  private: true
+  private: false
 
   # Enable issues?
   has_issues: false

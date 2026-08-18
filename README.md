@@ -1,6 +1,6 @@
 # Pop_OS!
 
-My Pop_OS! config, for backup and migration purposes.
+**My Pop_OS! config, for backup and migration purposes.**
 
 ## Installer
 
