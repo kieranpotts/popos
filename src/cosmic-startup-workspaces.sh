@@ -164,10 +164,22 @@ launch() {
   fi
 
   log "Launching '$cmd' -> workspace $ws"
+
+  # Switch to the target workspace *before* launching, so the compositor maps
+  # the new window straight onto it. COSMIC has no window rules, so a window
+  # otherwise opens on whichever workspace is active and has to be moved
+  # afterwards — visible as a flash on workspace 1 for every app in the list.
+  # This is cosmetic only; the move below still does the real work.
+  cos-cli ws-activate --workspace "$target" >/dev/null 2>&1
+
   setsid $cmd >/dev/null 2>&1 &
 
   # --wait polls the compositor for a matching app_id, so we don't need our
   # own sleep-and-poll loop. It only works alongside --app-id, not --index.
+  #
+  # Kept even though the workspace is already active: a slow-to-map window
+  # could otherwise land on whatever workspace the loop has since moved on
+  # to. When the window is already in the right place this is a no-op.
   if cos-cli move --app-id "$app_id" --workspace "$target" --wait "$WINDOW_TIMEOUT"; then
     log "  moved '$app_id' to workspace $ws"
     [[ -n "$states" ]] && apply_state "$app_id" "$states"
