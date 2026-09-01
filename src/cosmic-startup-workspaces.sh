@@ -28,13 +28,21 @@ set -uo pipefail
 # Format: one entry per app, entries separated by ";", fields within an
 # entry separated by "|":
 #
-#   <workspace>|<command to run>|<app-id>[;<workspace>|<command>|<app-id>...]
+#   <workspace>|<command to run>|<app-id>[|<state>][;...]
 #
 #   workspace  1-based workspace number (converted to cos-cli's
 #              0-based index internally)
 #   command    exactly what you'd type in a terminal
 #   app-id     Wayland app_id, matched partially & case-insensitively.
 #              Find yours by opening the app and running: cos-cli info
+#   state      Optional. Window state(s) to apply once the window has been
+#              placed, comma-separated: maximize, fullscreen, minimize,
+#              sticky, or any of their un- forms (unmaximize, etc.). Omit
+#              the field entirely to leave the window as the app opened it.
+#
+#              Note: under COSMIC's auto-tiling, tiled windows already fill
+#              their region and a maximize request may be ignored. This is
+#              really only meaningful in floating mode.
 # ─────────────────────────────────────────────────────────────
 
 # Seconds cos-cli will wait for each window to appear before giving up.
@@ -117,13 +125,41 @@ check_workspaces() {
   fi
 }
 
+# --- Apply optional window state(s) ---------------------------------------
+#
+# `cos-cli state` has no --wait of its own, so this is only ever called after
+# a successful `move --wait`, by which point the window is known to exist.
+apply_state() {
+  local app_id="$1" states="$2"
+  local flags=() state
+  local -a state_list
+
+  IFS=',' read -r -a state_list <<< "$states"
+  for state in "${state_list[@]}"; do
+    case "$state" in
+      maximize|unmaximize|minimize|unminimize|fullscreen|unfullscreen|sticky|unsticky)
+        flags+=("--${state}") ;;
+      '') ;;
+      *) log "  WARNING: unknown state '$state' for '$app_id'; ignoring" ;;
+    esac
+  done
+
+  (( ${#flags[@]} )) || return 0
+
+  if cos-cli state --app-id "$app_id" "${flags[@]}" >/dev/null 2>&1; then
+    log "  set state on '$app_id': ${flags[*]}"
+  else
+    log "  WARNING: could not set state on '$app_id' (${flags[*]})"
+  fi
+}
+
 # --- Launch one app and park it -------------------------------------------
 launch() {
-  local ws="$1" cmd="$2" app_id="$3"
+  local ws="$1" cmd="$2" app_id="$3" states="${4:-}"
   local target=$((ws - 1))   # cos-cli workspace indices are 0-based
 
   if (( DRY_RUN )); then
-    log "DRY RUN: '$cmd' -> workspace $ws (app-id match: '$app_id')"
+    log "DRY RUN: '$cmd' -> workspace $ws (app-id match: '$app_id')${states:+ [state: $states]}"
     return 0
   fi
 
@@ -134,8 +170,10 @@ launch() {
   # own sleep-and-poll loop. It only works alongside --app-id, not --index.
   if cos-cli move --app-id "$app_id" --workspace "$target" --wait "$WINDOW_TIMEOUT"; then
     log "  moved '$app_id' to workspace $ws"
+    [[ -n "$states" ]] && apply_state "$app_id" "$states"
   else
     log "  WARNING: could not place '$app_id' (no window within ${WINDOW_TIMEOUT}s?)"
+    [[ -n "$states" ]] && log "  skipping state '$states' (no window to apply it to)"
   fi
 }
 
@@ -148,11 +186,13 @@ main() {
   check_workspaces
 
   for entry in "${APPS[@]}"; do
-    IFS='|' read -r ws cmd app_id <<< "$entry"
+    # The 4th field (window state) is optional; entries with only 3 fields
+    # leave $states empty and behave exactly as before.
+    IFS='|' read -r ws cmd app_id states <<< "$entry"
     [[ -z "${ws:-}" || -z "${cmd:-}" || -z "${app_id:-}" ]] && {
       log "Skipping malformed entry: $entry"; continue
     }
-    launch "$ws" "$cmd" "$app_id"
+    launch "$ws" "$cmd" "$app_id" "${states:-}"
     sleep "$LAUNCH_DELAY"
   done
 

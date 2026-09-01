@@ -48,6 +48,10 @@ not application code — there is no build, test, or lint tooling.
   `systemd --user` reads once at the start of a login session — edit this
   file (not the script) to change which apps launch at login, and expect
   the change to take effect on the next fresh login, not mid-session.
+  Entries are `<workspace>|<command>|<app-id>[|<state>]`, where the
+  optional 4th field is comma-separated window states (`maximize`,
+  `fullscreen`, `minimize`, `sticky`, and their `un-` forms) applied via
+  `cos-cli state` after the window has been placed.
 
 ## Rules
 
