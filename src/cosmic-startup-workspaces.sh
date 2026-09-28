@@ -7,7 +7,7 @@
 #             cargo install --git https://github.com/estin/cos-cli
 #           jq        (optional, only for the pre-flight workspace check)
 #
-# Installed and autostarted by run/install — see README.md. To run it
+# Installed and autostarted by run/import — see README.md. To run it
 # standalone:
 #
 #   ./cosmic-startup-workspaces.sh            # launch everything
@@ -20,7 +20,7 @@ set -uo pipefail
 #
 # The app list is not hardcoded here — it's version-controlled at
 # src/environment.d/cosmic-startup-workspaces.conf and installed by
-# run/install to ~/.config/environment.d/cosmic-startup-workspaces.conf.
+# run/import to ~/.config/environment.d/cosmic-startup-workspaces.conf.
 # systemd --user reads that at the start of a login session, which is what
 # makes $COSMIC_STARTUP_APPS available to autostart apps (shell rc files
 # like ~/.bashrc are NOT sourced by autostart, so don't set it there).
@@ -81,11 +81,11 @@ die() { log "ERROR: $*"; exit 1; }
 #
 # Nothing to do without $COSMIC_STARTUP_APPS — treat this as a normal no-op
 # (exit 0, one informational log line) rather than an error, since an
-# empty/missing config is an expected state (e.g. before run/install has
+# empty/missing config is an expected state (e.g. before run/import has
 # been run, or on a machine that intentionally has no startup apps), and
 # this script runs unattended from autostart.
 if [[ -z "${COSMIC_STARTUP_APPS:-}" ]]; then
-  log "\$COSMIC_STARTUP_APPS not set; nothing to do. (Run run/install to" \
+  log "\$COSMIC_STARTUP_APPS not set; nothing to do. (Run run/import to" \
       "install ~/.config/environment.d/cosmic-startup-workspaces.conf.)"
   exit 0
 fi

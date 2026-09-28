@@ -6,13 +6,20 @@ not application code — there is no build, test, or lint tooling.
 
 ## Project structure
 
-- **[run/install](./run/install)** \
+- **[run/export](./run/export)** \
+  Backs up the current machine's config into `src/`: archives
+  `~/.config/cosmic` into the Cosmic settings tarball, dumps dconf, and
+  copies `~/Documents/Backgrounds` (skipped when it's already a symlink to
+  this repo). Run `./run/export --help` for options. Does not export
+  `Dark.ron` — that has no scriptable export and must be saved manually.
+
+- **[run/import](./run/import)** \
   Restores the backups below onto the current machine: extracts the Cosmic
   settings tarball, loads the dconf dump, links/copies the backgrounds
   directory, builds `cos-cli` (pinned rev — see `COS_CLI_REV`), symlinks
   `src/environment.d/cosmic-startup-workspaces.conf` into
   `~/.config/environment.d/`, and installs the startup-workspaces autostart
-  entry. Run `./run/install --help` for options. Does not apply `Dark.ron`
+  entry. Run `./run/import --help` for options. Does not apply `Dark.ron`
   — that has no scriptable import and must be applied manually.
 
 - **[src/Dark.ron](./src/Dark.ron)** \
@@ -36,14 +43,14 @@ not application code — there is no build, test, or lint tooling.
 - **[src/cosmic-startup-workspaces.sh](./src/cosmic-startup-workspaces.sh)** \
   Launches configured apps at login and places each on its own workspace,
   via [cos-cli](https://github.com/estin/cos-cli) (COSMIC has no native
-  window-rule/workspace-assignment feature yet). `run/install` installs an
+  window-rule/workspace-assignment feature yet). `run/import` installs an
   autostart entry that runs this script in place, from this repo checkout.
   Reads its app list from `$COSMIC_STARTUP_APPS` (see the CONFIG block for
   the format) — a no-op, not an error, if that's unset. `~/.bashrc` is NOT
   sourced by autostart, so this is never set there.
 
 - **[src/environment.d/cosmic-startup-workspaces.conf](./src/environment.d/cosmic-startup-workspaces.conf)** \
-  Version-controlled `COSMIC_STARTUP_APPS` value. `run/install` symlinks it
+  Version-controlled `COSMIC_STARTUP_APPS` value. `run/import` symlinks it
   to `~/.config/environment.d/cosmic-startup-workspaces.conf`, which
   `systemd --user` reads once at the start of a login session — edit this
   file (not the script) to change which apps launch at login, and expect
@@ -58,8 +65,8 @@ not application code — there is no build, test, or lint tooling.
 - Do not symlink `~/.config/cosmic` directly to the archive in this
   repository — always export/import via the tarball.
 
-- When updating a settings file, regenerate it fresh with the export command
-  above rather than hand-editing it.
+- When updating a settings file, regenerate it fresh with `run/export` (or
+  the export command above) rather than hand-editing it.
 
 - Edit `src/environment.d/cosmic-startup-workspaces.conf` to change the
   startup app list — don't hardcode it in
@@ -67,7 +74,7 @@ not application code — there is no build, test, or lint tooling.
   matches the current machine without checking `cos-cli info` first.
 
 - `cos-cli` is third-party and unaffiliated with System76, and has no
-  tagged releases. `run/install` pins it to a specific commit
+  tagged releases. `run/import` pins it to a specific commit
   (`COS_CLI_REV`) rather than floating on `main` — bump that rev
   deliberately, not automatically.
 

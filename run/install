@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 #
 # Restore this repo's Pop!_OS / Cosmic desktop backups onto the current
-# machine. Mirrors the manual steps documented in README.md.
+# machine. Mirrors the manual steps documented in README.md. The inverse of
+# run/export.
 #
 # Usage:
-#   ./run/install [options]
+#   ./run/import [options]
 #
 # Options:
 #   -y, --yes        Don't prompt before overwriting ~/.config/cosmic.
@@ -42,7 +43,7 @@ COPY_BACKGROUNDS=0
 NO_AUTOSTART=0
 
 usage() {
-  sed -n '2,28p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '2,26p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 
 while [ $# -gt 0 ]; do

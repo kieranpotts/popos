@@ -2,13 +2,20 @@
 
 **My Pop_OS! config, for backup and migration purposes.**
 
-## Installer
+## Export and import
 
-Run `./run/install` to restore the backups below onto a new machine
-automatically (Cosmic settings tarball, dconf dump, backgrounds, the
+Run `./run/export` (or `make export`) to back up the current machine's
+configuration into `./src` (Cosmic settings tarball, dconf dump, and
+backgrounds, if they aren't already symlinked to this repo). Review the result
+with `git diff --stat src` before committing. See `./run/export --help` for
+options.
+
+Run `./run/import` (or `make import`) to restore the backups below onto a new
+machine automatically (Cosmic settings tarball, dconf dump, backgrounds, the
 startup-workspaces app list, and its autostart entry). See
-`./run/install --help` for options. It does not apply `Dark.ron` — see
-below.
+`./run/import --help` for options.
+
+Neither script handles `Dark.ron` — see below.
 
 ## Documentation
 
@@ -67,11 +74,11 @@ window-rule/workspace-assignment feature yet. Its app list
 (`COSMIC_STARTUP_APPS`) is version-controlled at
 `./src/environment.d/cosmic-startup-workspaces.conf` — edit that file, not
 the script, to change which apps launch. If it's unset, the script is a
-no-op rather than an error. `run/install`:
+no-op rather than an error. `run/import`:
 
 - builds `cos-cli` via `cargo` if it isn't already installed, pinned to a
   known-good commit (`cos-cli` has no tagged releases — see `COS_CLI_REV` in
-  `run/install`), since it's a third-party tool unaffiliated with System76;
+  `run/import`), since it's a third-party tool unaffiliated with System76;
   this needs `cargo`/Rust (https://rustup.rs) available on `$PATH`
 - symlinks `./src/environment.d/cosmic-startup-workspaces.conf` to
   `~/.config/environment.d/cosmic-startup-workspaces.conf`, which `systemd
